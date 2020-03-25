@@ -42,6 +42,27 @@ contract("Springboard", accounts => {
       assert.equal(version, "1.0", "version should be 1.0");
          
       // Write you code here....
+      await walletV1.die();
+
+    const runtimeCode2 = WalletV2.deployedBytecode;
+    let tx2 = await springboard.execute(runtimeCode2);
+    assert.equal(tx2.logs.length, 1, "should have 1 event log");
+    assert.equal(tx2.logs[0].event, "ContractCreated", "different event");
+
+    // the new wallet contract address is logged in the event log
+    let walletAddress2 = tx2.logs[0].args[0];
+    const salt2 = utils.keccak256(accounts[0]);
+    const expectedAddress2 = calculateAddress(
+      springboard.address,
+      salt2,
+      initcode
+    );
+    assert.equal(expectedAddress2, walletAddress2, "address mismatch");
+
+    const walletV2 = await WalletV2.at(walletAddress2);
+    let version2 = await walletV2.version();
+    console.log(walletAddress2, version2);
+    assert.equal(version2, "2.0", "version should be 2.0");
       // 1) Upgrade wallet to V2
       // 2) verify wallet version == 2.0 after upgrade
       
